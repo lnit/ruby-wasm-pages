@@ -1,8 +1,18 @@
 <html>
   <head>
+    <meta charset="utf-8"/>
+    <script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@0.3.0-2022-09-06-f/dist/browser.script.iife.js"></script>
+    <script type="text/ruby">
+      require "js"
+      window = JS.global[:window]
 
+      5.downto(1) do |n|
+        text = "あと#{n}回！"
+        window.alert text
+      end
+    </script>
   </head>
   <body>
-
+    <H1>Ruby WASM!</H1>
   </body>
 </html>
