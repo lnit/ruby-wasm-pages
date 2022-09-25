@@ -59,7 +59,7 @@
 
           deltaFrame = tFrame - prevFrame;
           vm.eval(`
-            $scene.main(${deltaFrame})
+            $scene.main(${deltaFrame / 1000.0})
           `)
           prevFrame = tFrame;
         }
