@@ -1,0 +1,129 @@
+<html>
+  <head>
+    <title>MyNumber</title>
+    <meta charset="utf-8"/>
+    <script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@0.3.0-2022-09-24-a/dist/browser.umd.js"></script>
+  </head>
+  <body>
+    <style>
+      .error {
+        color: #EE2222;
+      }
+      textarea {
+        margin-top: 48px;
+      }
+    </style>
+    <div>
+      電話番号: <input type="text" inputmode="numeric" id="phone"></input>
+      <div id="error_phone" class="error"></div>
+    </div>
+    <div>
+      マイナンバー: <input type="text" inputmode="numeric" id="mynumber"></input>
+      <div id="error_mynumber" class="error"></div>
+    </div>
+    <textarea rows="20" cols="70" readonly>
+def valid_digit?(value)
+  digits = value.to_s.chars.map(&:to_i)
+  return false if digits.length != 12
+
+  check_digit = digits.pop
+  digits.reverse!
+
+  mods = (1..11).sum do |n|
+    pn = digits[n - 1]
+    qn = n <= 6 ? n + 1 : n - 5
+    pn * qn
+  end % 11
+
+  calced_check_digit = mods <= 1 ? 0 : 11 - mods
+
+  check_digit == calced_check_digit
+end
+
+def validate_mynumber(value)
+  if valid_digit?(value)
+    JS::eval("document.getElementById('error_mynumber').innerText = ''")
+  else
+    JS::eval("document.getElementById('error_mynumber').innerText = 'NG'")
+  end
+end
+    </textarea>
+    <script>
+      const { DefaultRubyVM } = window["ruby-wasm-wasi"];
+      const main = async () => {
+        // Fetch and instantiate WebAssembly binary
+        const response = await fetch(
+          //      Tips: Replace the binary with debug info if you want symbolicated stack trace.
+          //      (only nightly release for now)
+          //      "https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@next/dist/ruby.debug+stdlib.wasm"
+          "https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@next/dist/ruby.wasm"
+        );
+        const buffer = await response.arrayBuffer();
+        const module = await WebAssembly.compile(buffer);
+        const { vm } = await DefaultRubyVM(module);
+
+        vm.printVersion();
+        vm.eval(`
+          require "js"
+          @global = "fuga"
+        `);
+
+
+        vm.eval(`
+          def validate_phone_number(text)
+            cond = text.match?(/\\A0\\d{10}\\Z/)
+            if(cond)
+              JS::eval("document.getElementById('error_phone').innerText = ''")
+            else
+              JS::eval("document.getElementById('error_phone').innerText = 'NG'")
+            end
+          end
+
+          def valid_digit?(value)
+            digits = value.to_s.chars.map(&:to_i)
+            return false if digits.length != 12
+
+            check_digit = digits.pop
+            digits.reverse!
+
+            mods = (1..11).sum do |n|
+              pn = digits[n - 1]
+              qn = n <= 6 ? n + 1 : n - 5
+              pn * qn
+            end % 11
+
+            calced_check_digit = mods <= 1 ? 0 : 11 - mods
+
+            check_digit == calced_check_digit
+          end
+
+          def validate_mynumber(value)
+            if valid_digit?(value)
+              JS::eval("document.getElementById('error_mynumber').innerText = ''")
+            else
+              JS::eval("document.getElementById('error_mynumber').innerText = 'NG'")
+            end
+          end
+        `)
+
+        document.getElementById("phone").addEventListener("change", (event) => {
+          vm.eval(`
+            value = '${event.currentTarget.value}'
+            print value
+            validate_phone_number(value)
+          `)
+        });
+
+        document.getElementById("mynumber").addEventListener("change", (event) => {
+          vm.eval(`
+            value = '${event.currentTarget.value}'
+            print value
+            validate_mynumber(value)
+          `)
+        });
+      };
+
+      main();
+    </script>
+  </body>
+</html>
