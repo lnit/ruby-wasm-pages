@@ -1,18 +1,25 @@
 <html>
   <head>
     <meta charset="utf-8"/>
-    <script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@0.3.0-2022-09-06-f/dist/browser.script.iife.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@0.3.0-2022-09-24-a/dist/browser.script.iife.js"></script>
     <script type="text/ruby">
       require "js"
       window = JS.global[:window]
+      document = JS.global[:document]
 
-      5.downto(1) do |n|
-        text = "あと#{n}回！"
-        window.alert text
+      list = document.getElementById("list")
+      1.upto(5) do |i|
+        a = document.createElement("a")
+        a[:href] = "demo#{i}/"
+        a[:innerText] = "demo#{i}"
+        p = document.createElement("p")
+        p.append(a)
+        list.append(p)
       end
     </script>
   </head>
   <body>
     <H1>Ruby WASM!</H1>
+    <div id="list"></div>
   </body>
 </html>
