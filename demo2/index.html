@@ -1,0 +1,24 @@
+<html lang="ja">
+  <head>
+    <title>JavaScript</title>
+    <meta charset="utf-8"/>
+  </head>
+  <script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@0.3.0-2022-09-06-f/dist/browser.script.iife.js"></script>
+  <body>
+    <p id="content"></p>
+    <textarea rows="10" cols="70" readonly>
+<script type="text/ruby" charset="UTF-8">
+  require "js"
+  document = JS.global[:document]
+
+  document.getElementById("content")[:innerText] = "Hello, world!"
+</script>
+    </textarea>
+    <script type="text/ruby" charset="UTF-8">
+      require "js"
+      document = JS.global[:document]
+
+      document.getElementById("content")[:innerText] = "Hello, world!"
+    </script>
+  </body>
+</html>
