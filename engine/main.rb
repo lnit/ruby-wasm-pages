@@ -9,7 +9,7 @@ class MainScene
     Input.add_input_events
 
     entities << Player.new do |e|
-      e.pos_x = CANVAS_WIDTH / 2
+      e.pos_x = CANVAS_WIDTH / 3
       e.pos_y = 40
       e.scale_x = 40.0
       e.scale_y = 40.0
@@ -18,7 +18,7 @@ class MainScene
       e.vel_y = 0
 
       e.acc_x = 0
-      e.acc_y = 5
+      e.acc_y = 400
 
       e.color = "#FF3311"
     end
@@ -114,8 +114,8 @@ class Player < Entity
   attr_accessor :color
 
   def update(deltaTime)
-    self.vel_x += self.acc_x
-    self.vel_y += self.acc_y
+    self.vel_x += self.acc_x * deltaTime
+    self.vel_y += self.acc_y * deltaTime
 
 
     if pos_x < 20 ||  460 < pos_x
