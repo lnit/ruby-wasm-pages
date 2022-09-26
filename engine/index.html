@@ -10,7 +10,6 @@
         color: #EE2222;
       }
     </style>
-
     <div id="version"></div>
     <div id="main"></div>
     <canvas id="main_canvas" width="480" height="320"></canvas>
@@ -59,7 +58,7 @@
 
           deltaFrame = tFrame - prevFrame;
           vm.eval(`
-            $scene.main(${deltaFrame})
+            $scene.main(${deltaFrame / 1000.0})
           `)
           prevFrame = tFrame;
         }
