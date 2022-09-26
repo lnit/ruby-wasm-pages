@@ -1,21 +1,29 @@
 <html>
   <head>
+    <title>Ruby WASM DEMO!</title>
     <meta charset="utf-8"/>
     <script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@0.3.0-2022-09-24-a/dist/browser.script.iife.js"></script>
     <script type="text/ruby">
       require "js"
-      window = JS.global[:window]
-      document = JS.global[:document]
 
-      list = document.getElementById("list")
-      1.upto(5) do |i|
+      def append_link(path)
+        list = document.getElementById("list")
         a = document.createElement("a")
-        a[:href] = "demo#{i}/"
-        a[:innerText] = "demo#{i}"
+        a[:href] = "#{path}/"
+        a[:innerText] = path
         p = document.createElement("p")
         p.append(a)
         list.append(p)
       end
+
+      def document
+        @document ||= JS.global[:document]
+      end
+
+      1.upto(6) do |i|
+        append_link("demo#{i}")
+      end
+      append_link("engine")
     </script>
   </head>
   <body>
