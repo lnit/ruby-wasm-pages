@@ -5,12 +5,15 @@ CANVAS_WIDTH=480
 CANVAS_HEIGHT=320
 
 class MainScene
+  attr_accessor :reset_flag
+
   def initialize
     Input.add_input_events
 
-    entities << Player.new do |e|
-      e.pos_x = CANVAS_WIDTH / 2
-      e.pos_y = 40
+    player = Player.new do |e|
+      e.scene = self
+      e.pos_x = CANVAS_WIDTH / 3
+      e.pos_y = CANVAS_HEIGHT / 2
       e.scale_x = 40.0
       e.scale_y = 40.0
 
@@ -18,11 +21,25 @@ class MainScene
       e.vel_y = 0
 
       e.acc_x = 0
-      e.acc_y = 5
+      e.acc_y = 450
+    end
+    entities << player
 
-      e.color = "#FF3311"
+    entities << EnemySpawner.new do |e|
+      e.scene = self
+      e.player = player
     end
 
+    entities << Enemy.new do |e|
+      e.player = player
+      e.pos_x = CANVAS_WIDTH / 3
+      e.pos_y = CANVAS_HEIGHT + 150
+    end
+    entities << Enemy.new do |e|
+      e.player = player
+      e.pos_x = CANVAS_WIDTH / 3
+      e.pos_y = -150
+    end
   end
 
   def main(deltaTime)
@@ -46,10 +63,11 @@ class MainScene
     ctx.closePath
   end
 
-  private
   def entities
     @entities ||= []
   end
+
+  private
 
   def document
     @document = JS.global[:document]
@@ -110,24 +128,40 @@ class Entity
 end
 
 class Player < Entity
+  attr_accessor :scene
   attr_accessor :scale_x, :scale_y
   attr_accessor :color
+  attr_accessor :in_game, :dead
+
+  def initialize
+    super
+
+    self.in_game = false
+    self.dead = false
+  end
 
   def update(deltaTime)
-    self.vel_x += self.acc_x
-    self.vel_y += self.acc_y
+    if self.in_game
+      self.vel_x += self.acc_x * deltaTime
+      self.vel_y += self.acc_y * deltaTime
 
 
-    if pos_x < 20 ||  460 < pos_x
-      self.vel_x = - self.vel_x
+      if Input.mousedown?
+        jump
+      end
+
+      self.pos_x += self.vel_x * deltaTime
+      self.pos_y += self.vel_y * deltaTime
+    elsif self.dead
+      if Input.mousedown?
+        scene.reset_flag = true
+      end
+    else
+      if Input.mousedown?
+        self.in_game = true
+        jump
+      end
     end
-
-    if Input.mousedown?
-      self.vel_y = -250
-    end
-
-    self.pos_x += self.vel_x * deltaTime
-    self.pos_y += self.vel_y * deltaTime
   end
 
   def draw
@@ -138,10 +172,108 @@ class Player < Entity
     ctx.closePath
   end
 
+  def damage
+    self.in_game = false
+    self.dead = true
+  end
+
+  private
+
   def color
     @color || "#000000"
   end
+
+  def jump
+    self.vel_y = -300
+  end
 end
+
+class Enemy < Entity
+  SIZE = 60
+  attr_accessor :player
+
+  def update(deltaTime)
+    return nil if pos_x < - SIZE / 2
+
+    if player.in_game
+      self.pos_x += self.vel_x * deltaTime
+      self.pos_y += self.vel_y * deltaTime
+
+      collision_player
+    end
+  end
+
+  def draw
+    return nil if pos_x < - 30
+
+    ctx.beginPath
+    ctx.rect((pos_x - SIZE / 2).to_i, (pos_y - SIZE / 2).to_i, SIZE, SIZE)
+    ctx[:fillStyle] = color
+    ctx.fill
+    ctx.closePath
+  end
+
+  private
+
+  def collision_player
+    if (self.pos_x - player.pos_x).abs < (SIZE / 2 + 20) &&
+       (self.pos_y - player.pos_y).abs < (SIZE / 2 + 20)
+      player.damage
+      @failed = true
+    end
+  end
+
+  def color
+    return "#22DD33" if self.pos_x < 90
+    return "#FF2222" if @failed
+    "#AAAAAA"
+  end
+end
+
+class EnemySpawner < Entity
+  attr_accessor :scene, :player
+
+  attr_accessor :spawn_wait
+  SPAWN_PER_SECOND = 4
+
+  def initialize
+    super
+
+    self.spawn_wait = 0
+  end
+
+  def update(deltaTime)
+    if player.in_game
+      spawn if self.spawn_wait <= 0
+      self.spawn_wait -= deltaTime
+    end
+  end
+
+  def draw
+    nil
+  end
+
+  private
+  def spawn
+    self.spawn_wait = SPAWN_PER_SECOND
+
+    rand = Random.rand(-20..20)
+    spawn_enemy(CANVAS_WIDTH + 30, CANVAS_HEIGHT / 2 - 100 + rand)
+    spawn_enemy(CANVAS_WIDTH + 30, CANVAS_HEIGHT / 2 + 100 + rand)
+  end
+
+  def spawn_enemy(x, y)
+    scene.entities << Enemy.new do |e|
+      e.player = player
+      e.pos_x = x
+      e.pos_y = y
+
+      e.vel_x = -100
+      e.vel_y = 0
+    end
+  end
+end
+
 
 class Input
   @mouse_state = false
