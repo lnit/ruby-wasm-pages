@@ -22,8 +22,6 @@ class MainScene
 
       e.acc_x = 0
       e.acc_y = 450
-
-      e.color = "#1133DD"
     end
     entities << player
 
