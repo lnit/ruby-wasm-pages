@@ -21,7 +21,7 @@ class MainScene
       e.acc_x = 0
       e.acc_y = 450
 
-      e.color = "#FF3311"
+      e.color = "#1133DD"
     end
     entities << player
 
@@ -119,12 +119,13 @@ end
 class Player < Entity
   attr_accessor :scale_x, :scale_y
   attr_accessor :color
-  attr_accessor :in_game
+  attr_accessor :in_game, :dead
 
   def initialize
     super
 
     self.in_game = false
+    self.dead = false
   end
 
   def update(deltaTime)
@@ -155,6 +156,11 @@ class Player < Entity
     ctx.closePath
   end
 
+  def damage
+    self.in_game = false
+    self.dead = true
+  end
+
   private
 
   def color
@@ -167,23 +173,44 @@ class Player < Entity
 end
 
 class Enemy < Entity
+  SIZE = 60
   attr_accessor :player
 
   def update(deltaTime)
-    if player.in_game
+    return nil if pos_x < - SIZE / 2
 
+    if player.in_game
       self.pos_x += self.vel_x * deltaTime
       self.pos_y += self.vel_y * deltaTime
+
+      collision_player
     end
   end
 
   def draw
     return nil if pos_x < - 30
+
     ctx.beginPath
-    ctx.rect((pos_x - 30).to_i, (pos_y - 30).to_i, 60, 60)
-    ctx[:fillStyle] = "#AAAAAA"
+    ctx.rect((pos_x - SIZE / 2).to_i, (pos_y - SIZE / 2).to_i, SIZE, SIZE)
+    ctx[:fillStyle] = color
     ctx.fill
     ctx.closePath
+  end
+
+  private
+
+  def collision_player
+    if (self.pos_x - player.pos_x).abs < (SIZE / 2 + 20) &&
+       (self.pos_y - player.pos_y).abs < (SIZE / 2 + 20)
+      player.damage
+      @failed = true
+    end
+  end
+
+  def color
+    return "#22DD33" if self.pos_x < 90
+    return "#FF2222" if @failed
+    "#AAAAAA"
   end
 end
 
