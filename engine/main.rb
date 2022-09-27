@@ -10,7 +10,7 @@ class MainScene
 
     entities << Player.new do |e|
       e.pos_x = CANVAS_WIDTH / 3
-      e.pos_y = 40
+      e.pos_y = CANVAS_HEIGHT / 2
       e.scale_x = 40.0
       e.scale_y = 40.0
 
@@ -18,7 +18,7 @@ class MainScene
       e.vel_y = 0
 
       e.acc_x = 0
-      e.acc_y = 400
+      e.acc_y = 450
 
       e.color = "#FF3311"
     end
@@ -112,22 +112,32 @@ end
 class Player < Entity
   attr_accessor :scale_x, :scale_y
   attr_accessor :color
+  attr_accessor :in_game
+
+  def initialize
+    super
+
+    self.in_game = false
+  end
 
   def update(deltaTime)
-    self.vel_x += self.acc_x * deltaTime
-    self.vel_y += self.acc_y * deltaTime
+    if self.in_game
+      self.vel_x += self.acc_x * deltaTime
+      self.vel_y += self.acc_y * deltaTime
 
 
-    if pos_x < 20 ||  460 < pos_x
-      self.vel_x = - self.vel_x
+      if Input.mousedown?
+        jump
+      end
+
+      self.pos_x += self.vel_x * deltaTime
+      self.pos_y += self.vel_y * deltaTime
+    else
+      if Input.mousedown?
+        self.in_game = true
+        jump
+      end
     end
-
-    if Input.mousedown?
-      self.vel_y = -250
-    end
-
-    self.pos_x += self.vel_x * deltaTime
-    self.pos_y += self.vel_y * deltaTime
   end
 
   def draw
@@ -138,8 +148,14 @@ class Player < Entity
     ctx.closePath
   end
 
+  private
+
   def color
     @color || "#000000"
+  end
+
+  def jump
+    self.vel_y = -300
   end
 end
 
