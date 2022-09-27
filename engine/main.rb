@@ -5,11 +5,13 @@ CANVAS_WIDTH=480
 CANVAS_HEIGHT=320
 
 class MainScene
+  attr_accessor :reset_flag
+
   def initialize
     Input.add_input_events
 
-
     player = Player.new do |e|
+      e.scene = self
       e.pos_x = CANVAS_WIDTH / 3
       e.pos_y = CANVAS_HEIGHT / 2
       e.scale_x = 40.0
@@ -117,6 +119,7 @@ class Entity
 end
 
 class Player < Entity
+  attr_accessor :scene
   attr_accessor :scale_x, :scale_y
   attr_accessor :color
   attr_accessor :in_game, :dead
@@ -140,6 +143,10 @@ class Player < Entity
 
       self.pos_x += self.vel_x * deltaTime
       self.pos_y += self.vel_y * deltaTime
+    elsif self.dead
+      if Input.mousedown?
+        scene.reset_flag = true
+      end
     else
       if Input.mousedown?
         self.in_game = true

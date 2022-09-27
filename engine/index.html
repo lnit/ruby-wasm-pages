@@ -49,6 +49,8 @@
           deltaFrame = tFrame - prevFrame;
           vm.eval(`
             $scene.main(${deltaFrame / 1000.0})
+
+            $scene = MainScene.new if $scene.reset_flag
           `)
           prevFrame = tFrame;
         }
