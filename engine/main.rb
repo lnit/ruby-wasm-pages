@@ -8,7 +8,8 @@ class MainScene
   def initialize
     Input.add_input_events
 
-    entities << Player.new do |e|
+
+    player = Player.new do |e|
       e.pos_x = CANVAS_WIDTH / 3
       e.pos_y = CANVAS_HEIGHT / 2
       e.scale_x = 40.0
@@ -22,7 +23,12 @@ class MainScene
 
       e.color = "#FF3311"
     end
+    entities << player
 
+    entities << EnemySpawner.new do |e|
+      e.scene = self
+      e.player = player
+    end
   end
 
   def main(deltaTime)
@@ -46,10 +52,11 @@ class MainScene
     ctx.closePath
   end
 
-  private
   def entities
     @entities ||= []
   end
+
+  private
 
   def document
     @document = JS.global[:document]
@@ -158,6 +165,72 @@ class Player < Entity
     self.vel_y = -300
   end
 end
+
+class Enemy < Entity
+  attr_accessor :player
+
+  def update(deltaTime)
+    if player.in_game
+
+      self.pos_x += self.vel_x * deltaTime
+      self.pos_y += self.vel_y * deltaTime
+    end
+  end
+
+  def draw
+    return nil if pos_x < - 30
+    ctx.beginPath
+    ctx.rect((pos_x - 30).to_i, (pos_y - 30).to_i, 60, 60)
+    ctx[:fillStyle] = "#AAAAAA"
+    ctx.fill
+    ctx.closePath
+  end
+end
+
+class EnemySpawner < Entity
+  attr_accessor :scene, :player
+
+  attr_accessor :spawn_wait
+  SPAWN_PER_SECOND = 4
+
+  def initialize
+    super
+
+    self.spawn_wait = 0
+  end
+
+  def update(deltaTime)
+    if player.in_game
+      spawn if self.spawn_wait <= 0
+      self.spawn_wait -= deltaTime
+    end
+  end
+
+  def draw
+    nil
+  end
+
+  private
+  def spawn
+    self.spawn_wait = SPAWN_PER_SECOND
+
+    rand = Random.rand(-20..20)
+    spawn_enemy(CANVAS_WIDTH + 30, CANVAS_HEIGHT / 2 - 100 + rand)
+    spawn_enemy(CANVAS_WIDTH + 30, CANVAS_HEIGHT / 2 + 100 + rand)
+  end
+
+  def spawn_enemy(x, y)
+    scene.entities << Enemy.new do |e|
+      e.player = player
+      e.pos_x = x
+      e.pos_y = y
+
+      e.vel_x = -100
+      e.vel_y = 0
+    end
+  end
+end
+
 
 class Input
   @mouse_state = false
