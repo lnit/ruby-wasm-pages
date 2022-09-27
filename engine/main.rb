@@ -29,6 +29,17 @@ class MainScene
       e.scene = self
       e.player = player
     end
+
+    entities << Enemy.new do |e|
+      e.player = player
+      e.pos_x = CANVAS_WIDTH / 3
+      e.pos_y = CANVAS_HEIGHT + 150
+    end
+    entities << Enemy.new do |e|
+      e.player = player
+      e.pos_x = CANVAS_WIDTH / 3
+      e.pos_y = -150
+    end
   end
 
   def main(deltaTime)
