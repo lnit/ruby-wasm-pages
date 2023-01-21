@@ -1,0 +1,20 @@
+<html lang="ja">
+  <head>
+    <title>JavaScript</title>
+    <meta charset="utf-8"/>
+  </head>
+  <script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@next/dist/browser.script.iife.js"></script>
+  <body>
+    <input type="text" id="text"></input>
+    <script type="text/ruby" charset="UTF-8">
+      require "js"
+      document = JS.global[:document]
+      input = document.getElementById "text"
+      p "input.class: #{input.class}"
+      p input.public_methods
+      input.addEventListener "change" do |e|
+        p e[:target][:value]
+      end
+    </script>
+  </body>
+</html>
