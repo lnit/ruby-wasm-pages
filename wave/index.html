@@ -1,0 +1,14 @@
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@next/dist/browser.script.iife.js"></script>
+    <script type="text/ruby"  src="fetch_assets.rb" data-eval="async"></script>
+    <script type="text/ruby" src="victor.rb" data-eval="async"></script>
+    <script type="text/ruby" src="main.rb"></script>
+  </head>
+  <body>
+    <input type="button" id="gen" value="Generate"></input>
+    <br>
+    <svg id="plot-wave" width="441" height="320"></svg>
+  </body>
+</html>
