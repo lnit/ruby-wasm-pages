@@ -1,7 +1,5 @@
 SAMPLE_RATE = 44100
 
-puts "Hello, world!"
-
 require "js"
 window = JS.global[:window]
 document = JS.global[:document]
@@ -15,41 +13,34 @@ def ctx
   @ctx
 end
 
-
-
-SECONDS_TO_GENERATE = 1
+SECONDS_TO_GENERATE = 2
 TWO_PI = 2 * Math::PI
 RANDOM_GENERATOR = Random.new
-
 
 def generate_sample_data(num_samples, frequency, max_amplitude)
   position_in_period = 0.0
   position_in_period_delta = frequency / SAMPLE_RATE
 
-  # Initialize an array of samples set to 0.0. Each sample will be replaced with
-  # an actual value below.
   samples = [].fill(0.0, 0, num_samples)
 
   num_samples.times do |i|
-    # Add next sample to sample list. The sample value is determined by
-    # plugging the period offset into the appropriate wave function.
 
     # samples[i] += Math::sin(position_in_period * TWO_PI) * max_amplitude
 
     samples[i] += Math::sin(position_in_period * TWO_PI) * max_amplitude * 0.6
-    samples[i] += Math::sin(position_in_period * TWO_PI * 2) * max_amplitude * 0.1
-    samples[i] += Math::sin(position_in_period * TWO_PI * 3) * max_amplitude * 0.1
+    samples[i] += Math::sin(position_in_period * TWO_PI * 2) * max_amplitude * 0.2
+    #samples[i] += Math::sin(position_in_period * TWO_PI * 3) * max_amplitude * 0.1
     #samples[i] += Math::sin(position_in_period * TWO_PI * 4) * max_amplitude * 0.1
     #samples[i] += Math::sin(position_in_period * TWO_PI * 5) * max_amplitude * 0.1
-    samples[i] += Math::sin(position_in_period * TWO_PI * 0.5) * max_amplitude * 0.1
-    samples[i] += Math::sin(position_in_period * TWO_PI * 0.25) * max_amplitude * 0.1
+    samples[i] += Math::sin(position_in_period * TWO_PI * 0.5) * max_amplitude * 0.2
+    #samples[i] += Math::sin(position_in_period * TWO_PI * 0.25) * max_amplitude * 0.1
 
     # samples[i] += Math::sin(position_in_period * TWO_PI) * max_amplitude * 0.3
     # samples[i] += Math::sin(position_in_period * TWO_PI) * max_amplitude * 0.3
 
     position_in_period += position_in_period_delta
 
-    # Constrain the period between 0.0 and 1.0
+    # 0.0 → 1.0 の周期を繰り返す
     if position_in_period >= 1.0
       position_in_period -= 1.0
     end
@@ -78,29 +69,86 @@ def draw_wave(samples)
     stroke_linecap: :round,
     points: points
 
-  puts svg.render
   document ||= JS.global[:document]
   document.getElementById("plot-wave")[:innerHTML] = svg.render
 end
 
+# 基準波形の生成(A=442Hz)
+gen_btn = document.getElementById "gen"
+gen_btn.addEventListener "click" do |e|
+  textarea = document.getElementById "script-wave"
+  eval(textarea[:value].to_s)
 
-button = document.getElementById "gen"
-button.addEventListener "click" do |e|
   num_samples = SAMPLE_RATE * SECONDS_TO_GENERATE
-  buf = ctx.createBuffer(1, SAMPLE_RATE, num_samples);
-  data = buf.getChannelData(0);
-  samples = generate_sample_data(num_samples, 442.0, 0.8)
+  @buf = ctx.createBuffer(1, num_samples, SAMPLE_RATE);
+  data = @buf.getChannelData(0);
+  samples = generate_sample_data(num_samples, 442.0, 0.5)
 
   data[:length].to_i.times do |i|
     data[i] = samples[i]
   end
 
-  puts ctx
   draw_wave(samples)
+end
 
+# テスト再生
+play_btn = document.getElementById "play"
+play_btn.addEventListener "click" do |e|
   src = ctx.createBufferSource()
-  src[:buffer] = buf
+  src[:buffer] = @buf
   src.connect(ctx[:destination])
 
   src.start(0)
 end
+
+
+#
+KEYS = %w(
+  z s x d c v g b h n j m
+  e 4 r 5 t y 7 u 8 i 9 o p
+)
+
+KEYS_HASH = KEYS.zip(-9..KEYS.length).to_h
+# 押したキーに対応した音階を得るための倍率
+def key_to_pitch_mag(key)
+  n = KEYS_HASH[key]
+  2 ** Rational(n / 12.0)
+end
+
+# キーボードから再生
+@keydown_state = {}
+@keydown_gain = {}
+document.addEventListener "keydown" do |e|
+  key = e[:key].to_s
+
+  if KEYS.include?(key) && !@keydown_state[key]
+    @keydown_state[key] = true
+    src = ctx.createBufferSource()
+    src[:buffer] = @buf
+    # src[:playbackRate][:value] = key_to_pitch_mag(key)
+    src[:detune][:value] = KEYS_HASH[key] * 100
+    src[:loop] = true
+
+    gain_node = ctx.createGain()
+    gain_node[:gain][:value] = 1.0
+    gain_node[:gain].linearRampToValueAtTime(1, ctx[:currentTime].to_i)
+    @keydown_gain[key] = gain_node
+
+    src.connect(gain_node).connect(ctx[:destination])
+
+    src.start(0)
+  end
+end
+
+document.addEventListener "keyup" do |e|
+  key = e[:key].to_s
+
+  if KEYS.include?(key)
+    @keydown_state[key] = false
+    gain_node = @keydown_gain.delete(key)
+    gain_node[:gain].linearRampToValueAtTime(0, ctx[:currentTime].to_i + 1.5)
+  end
+end
+
+
+puts "Hello, world!"
