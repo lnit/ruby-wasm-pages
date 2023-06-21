@@ -6,7 +6,7 @@
     <script type="text/ruby" src="victor.rb" data-eval="async"></script>
     <script type="text/ruby" src="main.rb"></script>
   </head>
-  <body>
+  <body style="margin: 2rem;">
     <textarea id="script-wave" rows="20" style="width: 600px;">
 def generate_sample_data(num_samples, frequency, max_amplitude)
   position_in_period = 0.0
@@ -36,5 +36,7 @@ end
     <input type="button" id="play" value="Test"></input>
     <br>
     <svg id="plot-wave" width="441" height="320"></svg>
+    <br>
+    <svg id="dummy" width="441" height="480"></svg>
   </body>
 </html>

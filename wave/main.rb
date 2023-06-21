@@ -16,6 +16,8 @@ end
 SECONDS_TO_GENERATE = 2
 TWO_PI = 2 * Math::PI
 RANDOM_GENERATOR = Random.new
+MAX_AMP = 0.3
+MAX_GAIN = 0.1
 
 def generate_sample_data(num_samples, frequency, max_amplitude)
   position_in_period = 0.0
@@ -64,7 +66,7 @@ def draw_wave(samples)
   svg.element :polyline,
     stroke: "green",
     fill: "transparent",
-    stroke_width: 1,
+    stroke_width: 4,
     stroke_linejoin: :round,
     stroke_linecap: :round,
     points: points
@@ -82,7 +84,7 @@ gen_btn.addEventListener "click" do |e|
   num_samples = SAMPLE_RATE * SECONDS_TO_GENERATE
   @buf = ctx.createBuffer(1, num_samples, SAMPLE_RATE);
   data = @buf.getChannelData(0);
-  samples = generate_sample_data(num_samples, 442.0, 0.5)
+  samples = generate_sample_data(num_samples, 442.0, MAX_AMP)
 
   data[:length].to_i.times do |i|
     data[i] = samples[i]
@@ -96,7 +98,11 @@ play_btn = document.getElementById "play"
 play_btn.addEventListener "click" do |e|
   src = ctx.createBufferSource()
   src[:buffer] = @buf
-  src.connect(ctx[:destination])
+
+  gain_node = ctx.createGain()
+  gain_node[:gain][:value] = MAX_GAIN
+
+  src.connect(gain_node).connect(ctx[:destination])
 
   src.start(0)
 end
@@ -105,7 +111,8 @@ end
 #
 KEYS = %w(
   z s x d c v g b h n j m
-  e 4 r 5 t y 7 u 8 i 9 o p
+  e 4 r 5 t y 7 u 8 i 9 o
+  p - @ ^ [
 )
 
 KEYS_HASH = KEYS.zip(-9..KEYS.length).to_h
@@ -130,8 +137,8 @@ document.addEventListener "keydown" do |e|
     src[:loop] = true
 
     gain_node = ctx.createGain()
-    gain_node[:gain][:value] = 1.0
-    gain_node[:gain].linearRampToValueAtTime(1, ctx[:currentTime].to_i)
+    gain_node[:gain][:value] = MAX_GAIN
+    gain_node[:gain].linearRampToValueAtTime(MAX_GAIN, ctx[:currentTime].to_i)
     @keydown_gain[key] = gain_node
 
     src.connect(gain_node).connect(ctx[:destination])
