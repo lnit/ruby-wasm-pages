@@ -3,7 +3,8 @@
     <meta charset="utf-8"/>
     <!--<script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@next/dist/browser.script.iife.js"></script>-->
     <!--<script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@0.3.0-2022-09-24-a/dist/browser.script.iife.js"></script>-->
-    <script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@next/dist/browser.script.iife.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@0.4.0/dist/browser.script.iife.js"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/ruby-head-wasm-wasi@latest/dist/browser.script.iife.js"></script>
   </head>
   <body>
     <style>
@@ -15,7 +16,6 @@
     <div id="main"></div>
     <canvas id="main_canvas" width="480" height="320"></canvas>
     <script>
-
       const sleep = () => new Promise(resolve => {
         setTimeout(resolve, 200)
       })
@@ -32,7 +32,7 @@
         );
         const fetched = await rubyResponse.text();
         vm.eval(fetched)
-        vm.eval(`
+        vm.evalAsync(`
           $scene = MainScene.new
         `)
         vm.eval("puts $scene");
@@ -48,10 +48,13 @@
           const stopMain = window.requestAnimationFrame( main );
 
           deltaFrame = tFrame - prevFrame;
-          vm.eval(`
+          vm.evalAsync(`
             $scene.main(${deltaFrame / 1000.0})
 
-            $scene = MainScene.new if $scene.reset_flag
+            if $scene.reset_flag
+              $scene.reset_flag = false
+              $scene = MainScene.new
+            end
           `)
           prevFrame = tFrame;
         }

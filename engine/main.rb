@@ -70,7 +70,7 @@ class MainScene
   private
 
   def document
-    @document = JS.global[:document]
+    @document ||= JS.global[:document]
   end
 
   def fps
@@ -85,7 +85,6 @@ class MainScene
   def ctx
     @ctx = canvas.getContext("2d")
   end
-
 end
 
 class Entity
@@ -138,6 +137,9 @@ class Player < Entity
 
     self.in_game = false
     self.dead = false
+
+    @jump_se = JumpSE.new
+    @damage_se = DamageSE.new
   end
 
   def update(deltaTime)
@@ -175,6 +177,7 @@ class Player < Entity
   def damage
     self.in_game = false
     self.dead = true
+    @damage_se.play
   end
 
   private
@@ -185,6 +188,7 @@ class Player < Entity
 
   def jump
     self.vel_y = -300
+    @jump_se.play
   end
 end
 
@@ -285,29 +289,23 @@ class Input
     document = JS.global[:document]
     ev_canvas = document.getElementById("main_canvas")
     ev_canvas.addEventListener("mousedown") do |e|
-      print "down"
       @mouse_state = true
     end
     ev_canvas.addEventListener("mouseup") do |e|
-      print "up"
       @mouse_state = false
     end
     ev_canvas.addEventListener("mouseleave") do |e|
       if @mouse
-        print "leave"
         @mouse_state = false
       end
     end
     ev_canvas.addEventListener("touchstart") do |e|
-      print "down"
       @mouse_state = true
     end
     ev_canvas.addEventListener("touchend") do |e|
-      print "up"
       @mouse_state = false
     end
     ev_canvas.addEventListener("touchcancel") do |e|
-      print "up"
       @mouse_state = false
     end
   end
@@ -328,5 +326,47 @@ class Input
 
   def self.mousedown?
     @mousedown
+  end
+end
+
+class SoundEffect
+  def initialize
+    array_buffer = JS.global.fetch(path).await.arrayBuffer.await
+    @audio_buffer = ctx.decodeAudioData(array_buffer).await
+
+    puts path
+  end
+
+  def play
+    src = ctx.createBufferSource()
+    src[:buffer] = @audio_buffer
+
+    src.connect(gain_node).connect(ctx[:destination])
+    src.start(0)
+  end
+
+  private
+
+  def ctx
+    @@ctx ||= JS.global[:AudioContext].new
+  end
+
+  def gain_node
+    gain_node = ctx.createGain()
+    gain_node[:gain][:value] = 0.3
+    gain_node
+  end
+end
+
+class JumpSE < SoundEffect
+  def path
+    "se/Motion-Pop20-1.mp3"
+  end
+end
+
+
+class DamageSE < SoundEffect
+  def path
+    "se/Motion-Pop13-2.mp3"
   end
 end
