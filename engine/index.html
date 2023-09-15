@@ -32,7 +32,7 @@
         );
         const fetched = await rubyResponse.text();
         vm.eval(fetched)
-        vm.evalAsync(`
+        await vm.evalAsync(`
           $scene = MainScene.new
         `)
         vm.eval("puts $scene");
@@ -49,13 +49,14 @@
 
           deltaFrame = tFrame - prevFrame;
           vm.evalAsync(`
+            return unless $scene
             $scene.main(${deltaFrame / 1000.0})
 
             if $scene.reset_flag
               $scene.reset_flag = false
               $scene = MainScene.new
             end
-          `)
+          `).catch(function(e) { console.warn(e)})
           prevFrame = tFrame;
         }
 
