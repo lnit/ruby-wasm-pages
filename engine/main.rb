@@ -331,10 +331,9 @@ end
 
 class SoundEffect
   def initialize
-    array_buffer = JS.global.fetch(path).await.arrayBuffer.await
+    response = JS.global.fetch(path).await
+    array_buffer = response.arrayBuffer.await
     @audio_buffer = ctx.decodeAudioData(array_buffer).await
-
-    puts path
   end
 
   def play
@@ -353,7 +352,7 @@ class SoundEffect
 
   def gain_node
     gain_node = ctx.createGain()
-    gain_node[:gain][:value] = 0.3
+    gain_node[:gain][:value] = 0.5
     gain_node
   end
 end
